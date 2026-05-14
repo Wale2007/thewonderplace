@@ -1,0 +1,44 @@
+.preloader {
+  position: fixed;
+  inset: 0;
+  background: var(--color-black);
+  z-index: var(--z-preloader);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preloader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xl);
+  text-align: center;
+}
+
+.preloader-logo-img {
+  height: 100px;
+  width: auto;
+  filter: drop-shadow(0 0 20px rgba(212, 168, 83, 0.2));
+}
+
+.preloader-bar-wrap {
+  width: 240px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.preloader-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-gold), var(--color-gold-light));
+}
+
+.preloader-motto {
+  font-family: var(--font-accent);
+  color: var(--color-gold-light);
+  font-size: 1.25rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
