@@ -48,7 +48,7 @@ export default function Admin() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'wonderplace2026') {
+    if (password === import.meta.env.VITE_ADMIN_PASSWORD) {
       setIsAuthenticated(true);
       localStorage.setItem('wp_admin_auth', 'true');
     } else {
