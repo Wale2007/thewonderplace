@@ -63,7 +63,6 @@ interface AppState {
   // Admin Actions
   addMenuItem: (item: Omit<MenuItem, 'id'>) => Promise<void>;
   deleteMenuItem: (id: string) => Promise<void>;
-  toggleMenuItemAvailability: (id: string, currentStatus: boolean) => Promise<void>;
   updateMenuItem: (id: string, updates: Partial<MenuItem>) => Promise<void>;
   updateSettings: (updates: Partial<StoreSettings>) => Promise<void>;
   updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
