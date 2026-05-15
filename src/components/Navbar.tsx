@@ -28,7 +28,7 @@ export default function Navbar() {
     <nav className={`navbar ${isScrolled ? 'navbar-scrolled' : ''}`}>
       <div className="navbar-container container">
         <div className="navbar-logo">
-          <img src="/wonderplace.jpg" alt="THEWONDERPLACE" className="navbar-logo-img" />
+          <img src="/logo.png" alt="THEWONDERPLACE" className="navbar-logo-img" />
         </div>
 
         {/* Desktop Links */}

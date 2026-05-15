@@ -121,7 +121,7 @@ export default function Admin() {
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <img src="/wonderplace.jpg" alt="Logo" className="admin-logo" />
+            <img src="/logo.png" alt="Logo" className="admin-logo" />
             <span className="admin-badge">Admin Panel</span>
           </div>
           <button className="mobile-logout-btn" onClick={handleLogout} style={{ display: 'none' }}>

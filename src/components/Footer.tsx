@@ -38,7 +38,7 @@ export default function Footer() {
         <div className="footer-grid">
           <div className="footer-brand">
             <div className="footer-logo">
-              <img src="/wonderplace.jpg" alt="THEWONDERPLACE" className="footer-logo-img" />
+              <img src="/logo.png" alt="THEWONDERPLACE" className="footer-logo-img" />
             </div>
             <p className="footer-tagline">
               Premium homemade Nigerian cuisine, crafted with love and tradition.
