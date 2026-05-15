@@ -73,28 +73,35 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             exit={{ opacity: 0, scale: 0.9, y: 30 }}
             onClick={e => e.stopPropagation()}
             style={{ 
-              width: '95%', maxWidth: '500px', padding: '2rem', zIndex: 1001,
-              position: 'relative', border: '1px solid rgba(212, 168, 83, 0.2)'
+              width: '95%', maxWidth: '500px', zIndex: 1001,
+              position: 'relative', border: '1px solid rgba(212, 168, 83, 0.2)',
+              maxHeight: '90vh', display: 'flex', flexDirection: 'column'
             }}
           >
-            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
-              <h2 style={{ fontSize: '1.75rem', fontFamily: 'var(--font-display)', color: 'var(--color-gold)' }}>
+            <div className="modal-header" style={{ 
+              display: 'flex', justifyContent: 'space-between', padding: '1.5rem 2rem 1rem', 
+              alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.05)',
+              background: 'rgba(10,10,10,0.8)', backdropFilter: 'blur(10px)',
+              borderTopLeftRadius: '20px', borderTopRightRadius: '20px'
+            }}>
+              <h2 style={{ fontSize: '1.5rem', fontFamily: 'var(--font-display)', color: 'var(--color-gold)', margin: 0 }}>
                 {step === 'details' ? 'Checkout' : 'Payment Details'}
               </h2>
               <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', opacity: 0.6 }}>
-                <X size={28} />
+                <X size={24} />
               </button>
             </div>
             
-            <AnimatePresence mode="wait">
-              {step === 'details' ? (
-                <motion.div 
-                  key="details-step"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                >
-                  <div className="order-type-toggle" style={{ display: 'flex', gap: '10px', marginBottom: '2rem' }}>
+            <div style={{ overflowY: 'auto', padding: '1.5rem 2rem 2rem', flex: 1 }} className="modal-body-scroll">
+              <AnimatePresence mode="wait">
+                {step === 'details' ? (
+                  <motion.div 
+                    key="details-step"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                  >
+                    <div className="order-type-toggle" style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem' }}>
                     <button 
                       className={`btn ${orderType === 'delivery' ? 'btn-primary' : 'btn-ghost'}`}
                       onClick={() => setOrderType('delivery')}
@@ -273,6 +280,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 </motion.div>
               )}
             </AnimatePresence>
+            </div>
           </motion.div>
         </motion.div>
       )}
