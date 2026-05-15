@@ -75,7 +75,7 @@ interface AppState {
   clearCart: () => void;
   
   // Order Flow
-  createOrder: (customer: { name: string; phone: string; address: string }) => Promise<void>;
+  createOrder: (customer: { name: string; phone: string; address: string }, orderType: 'delivery' | 'pickup') => Promise<void>;
 
   addToast: (message: string, type: 'success' | 'error') => void;
   removeToast: (id: string) => void;
@@ -87,7 +87,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     is_open: true,
     announcement: "Welcome to THEWONDERPLACE!",
     whatsapp_number: "2348067765275",
-    delivery_fee: 1000
+    delivery_fee: 1500
   },
   reviews: [],
   cart: [],
@@ -162,14 +162,16 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!error) set({ orders: [] });
   },
 
-  createOrder: async (customer) => {
+  createOrder: async (customer, orderType: 'delivery' | 'pickup') => {
     const { cart, settings, clearCart, addToast } = get();
-    const totalPrice = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0) + settings.delivery_fee;
+    const deliveryFee = orderType === 'delivery' ? 1500 : 0;
+    const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const totalPrice = subtotal + deliveryFee;
     
     const orderData = {
       customer_name: customer.name,
       phone_number: customer.phone,
-      delivery_address: customer.address,
+      delivery_address: orderType === 'delivery' ? customer.address : 'PICKUP AT STORE',
       items: cart,
       total_price: totalPrice,
       status: 'pending'
@@ -179,22 +181,22 @@ export const useAppStore = create<AppState>((set, get) => ({
     
     if (!error) {
       const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
-      const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-      const orderText = `*NEW ORDER - THEWONDERPLACE*\n\n` +
+      const orderText = `*PAYMENT CONFIRMATION - THEWONDERPLACE*\n\n` +
         `*Customer:* ${customer.name}\n` +
         `*Phone:* ${customer.phone}\n` +
-        `*Address:* ${customer.address}\n\n` +
+        `*Method:* ${orderType === 'delivery' ? 'Delivery' : 'Pickup'}\n` +
+        (orderType === 'delivery' ? `*Address:* ${customer.address}\n\n` : `\n`) +
         `*Items Ordered (${totalItemsCount}):*\n` +
         cart.map(i => `- ${i.name} x${i.quantity} (N${(i.price * i.quantity).toLocaleString()})`).join('\n') +
         `\n\n*Subtotal:* N${subtotal.toLocaleString()}\n` +
-        `*Delivery Fee:* N${settings.delivery_fee.toLocaleString()}\n` +
+        `*Delivery Fee:* N${deliveryFee.toLocaleString()}\n` +
         `*Grand Total:* N${totalPrice.toLocaleString()}\n\n` +
-        `_Please confirm my order and payment._`;
+        `*Payment Status:* I have just made the payment. Please confirm and process my order.`;
 
       window.location.href = `https://wa.me/${settings.whatsapp_number}?text=${encodeURIComponent(orderText)}`;
       clearCart();
-      addToast('Order placed!', 'success');
+      addToast('Order details sent!', 'success');
     } else {
       addToast('Error saving order.', 'error');
     }
