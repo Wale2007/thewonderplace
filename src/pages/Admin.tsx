@@ -120,8 +120,13 @@ export default function Admin() {
     <div className="admin-layout">
       <aside className="admin-sidebar">
         <div className="admin-sidebar-header">
-          <img src="/logo.png" alt="Logo" className="admin-logo" />
-          <span className="admin-badge">Admin Panel</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/logo.png" alt="Logo" className="admin-logo" />
+            <span className="admin-badge">Admin Panel</span>
+          </div>
+          <button className="mobile-logout-btn" onClick={handleLogout} style={{ display: 'none' }}>
+            <LogOut size={18} />
+          </button>
         </div>
         <nav className="admin-nav">
           <button className={`admin-nav-btn ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
