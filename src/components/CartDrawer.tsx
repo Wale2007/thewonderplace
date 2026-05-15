@@ -41,7 +41,7 @@ export default function CartDrawer() {
               <div className="cart-header">
                 <div className="cart-header-title">
                   <ShoppingBag size={24} />
-                  <h2>Your Bag</h2>
+                  <h2>Your Cart</h2>
                 </div>
                 <button className="cart-close" onClick={() => setIsOpen(false)}>
                   <X size={28} />
@@ -52,7 +52,7 @@ export default function CartDrawer() {
                 {cart.length === 0 ? (
                   <div className="cart-empty">
                     <ShoppingBag size={48} style={{ opacity: 0.2, marginBottom: '1rem' }} />
-                    <p>Your bag is empty.</p>
+                    <p>Your cart is empty.</p>
                   </div>
                 ) : (
                   <div className="cart-items">

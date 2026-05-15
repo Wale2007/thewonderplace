@@ -73,7 +73,7 @@ export default function MenuSection() {
                   disabled={!item.is_available}
                 >
                   <Plus size={18} />
-                  <span>Add to Bag</span>
+                  <span>Add to Cart</span>
                 </button>
               </div>
             </motion.div>
