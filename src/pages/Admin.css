@@ -146,6 +146,12 @@
   font-size: 2rem;
 }
 
+.admin-form-container {
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+}
+
 /* Orders Grid */
 .orders-grid {
   display: grid;
@@ -264,15 +270,78 @@
   .admin-sidebar {
     width: 100%;
     height: auto;
-    position: relative;
-    padding: var(--space-lg);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: var(--space-md) var(--space-lg);
+    background: rgba(20, 20, 20, 0.95);
+    backdrop-filter: blur(10px);
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
   
   .admin-sidebar-header {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+  }
+
+  .admin-logo {
+    height: 40px;
+  }
+  
+  .admin-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: var(--space-xs);
+    gap: var(--space-xs);
+    scrollbar-width: none;
+  }
+
+  .admin-nav::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .admin-nav-btn {
+    padding: 0.6rem var(--space-md);
+    white-space: nowrap;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .admin-logout-btn {
+    display: none; /* Hide in mobile nav, maybe put in header or at bottom */
+  }
+
+  .admin-main {
+    padding: var(--space-lg);
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
     margin-bottom: var(--space-xl);
+  }
+
+  .admin-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .admin-title {
+    font-size: 1.5rem;
   }
   
   .orders-grid {
     grid-template-columns: 1fr;
+  }
+
+  .order-card {
+    padding: var(--space-lg);
+  }
+
+  .admin-form-container {
+    padding: var(--space-lg) !important;
   }
 }

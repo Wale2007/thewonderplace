@@ -190,7 +190,7 @@ export default function Admin() {
             {activeTab === 'menu' && (
               <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 {isAddingItem ? (
-                  <div className="admin-form-container glass-card" style={{ padding: '2rem', maxWidth: '600px' }}>
+                  <div className="admin-form-container glass-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                       <h2 style={{ fontSize: '1.5rem', color: 'var(--color-gold)' }}>Add New Dish</h2>
                       <button onClick={() => setIsAddingItem(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={24} /></button>

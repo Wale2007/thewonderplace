@@ -77,6 +77,9 @@ export default function Hero() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.5, ease: 'easeInOut' }}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                loading="eager"
+                // @ts-ignore
+                fetchpriority="high"
               />
             </AnimatePresence>
             <div className="hero-image-overlay" />

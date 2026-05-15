@@ -18,8 +18,7 @@ export default function App() {
   useEffect(() => {
     const init = async () => {
       await Promise.all([fetchMenu(), fetchSettings(), fetchReviews()]);
-      // Artificially wait a bit more to ensure smooth transition
-      setTimeout(() => setIsInitialLoading(false), 1500);
+      setIsInitialLoading(false);
     };
     init();
   }, [fetchMenu, fetchSettings, fetchReviews]);
