@@ -19,6 +19,7 @@ export interface Order {
   id: string;
   created_at: string;
   customer_name: string;
+  customer_email: string;
   phone_number: string;
   delivery_address: string;
   items: CartItem[];
@@ -75,7 +76,7 @@ interface AppState {
   clearCart: () => void;
   
   // Order Flow
-  createOrder: (customer: { name: string; phone: string; address: string }, orderType: 'delivery' | 'pickup') => Promise<void>;
+  createOrder: (customer: { name: string; phone: string; email: string; address: string }, orderType: 'delivery' | 'pickup') => Promise<void>;
 
   addToast: (message: string, type: 'success' | 'error') => void;
   removeToast: (id: string) => void;
@@ -153,8 +154,38 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   updateOrderStatus: async (id, status) => {
+    const { orders } = get();
+    const order = orders.find(o => o.id === id);
+    
     const { error } = await supabase.from('orders').update({ status }).eq('id', id);
-    if (!error) get().fetchOrders();
+    if (!error) {
+      get().fetchOrders();
+      
+      // Send Confirmation Email to Customer
+      if (status === 'confirmed' && order?.customer_email) {
+        const itemsList = order.items.map(i => `- ${i.name} x${i.quantity}`).join('\n');
+        
+        try {
+          await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              service_id: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+              template_id: import.meta.env.VITE_EMAILJS_TEMPLATE_ID_CUSTOMER,
+              user_id: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+              template_params: {
+                to_name: order.customer_name,
+                to_email: order.customer_email,
+                items_list: itemsList,
+                total_price: `N${order.total_price.toLocaleString()}`,
+                message: `Your order has been confirmed! We are now preparing your wonder.`
+              }
+            })
+          });
+          get().addToast('Confirmation email sent to customer', 'success');
+        } catch (e) { console.error('Customer email failed', e); }
+      }
+    }
   },
 
   clearOrders: async () => {
@@ -170,6 +201,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     
     const orderData = {
       customer_name: customer.name,
+      customer_email: customer.email,
       phone_number: customer.phone,
       delivery_address: orderType === 'delivery' ? customer.address : 'PICKUP AT STORE',
       items: cart,
@@ -180,6 +212,36 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { error } = await supabase.from('orders').insert([orderData]);
     
     if (!error) {
+      // Send Email to Admin
+      const itemsList = cart.map(i => `- ${i.name} x${i.quantity} (N${(i.price * i.quantity).toLocaleString()})`).join('\n');
+      
+      const adminEmailParams = {
+        to_name: 'Admin',
+        from_name: customer.name,
+        customer_email: customer.email,
+        items_list: itemsList,
+        total_price: `N${totalPrice.toLocaleString()}`,
+        message: `A new order has been placed by ${customer.name}.`,
+        admin_email: 'officialwonderplace@gmail.com'
+      };
+      
+      const sendEmail = async (templateId: string, params: any) => {
+        try {
+          await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              service_id: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+              template_id: templateId,
+              user_id: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+              template_params: params
+            })
+          });
+        } catch (e) { console.error('Email failed', e); }
+      };
+
+      sendEmail(import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ADMIN, adminEmailParams);
+
       const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
       const orderText = `*PAYMENT CONFIRMATION - THEWONDERPLACE*\n\n` +

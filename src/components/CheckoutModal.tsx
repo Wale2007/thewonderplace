@@ -15,6 +15,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    email: '',
     address: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,7 +34,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
   const handleShowPayment = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.phone) return;
+    if (!formData.name || !formData.phone || !formData.email) return;
     if (orderType === 'delivery' && !formData.address) return;
     setStep('payment');
   };
@@ -137,6 +138,21 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                         placeholder="080 0000 0000"
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
+                        style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px' }}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', color: 'var(--color-gold)', fontSize: '0.9rem' }}>
+                        <Send size={16} /> Email Address
+                      </label>
+                      <input 
+                        type="email" 
+                        className="form-input" 
+                        required 
+                        placeholder="your@email.com"
+                        value={formData.email}
+                        onChange={e => setFormData({...formData, email: e.target.value})}
                         style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '8px' }}
                       />
                     </div>
