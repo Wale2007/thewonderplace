@@ -47,7 +47,7 @@ export default function MenuSection() {
               variants={itemVariants}
             >
               <div className="menu-item-image-wrap">
-                <img src={item.image_url} alt={item.name} className="menu-item-image" />
+                <img src={item.image_url} alt={item.name} className="menu-item-image" loading="lazy" />
                 <div className="menu-item-badge">
                   <Clock size={12} />
                   <span>Freshly Made</span>

@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import ToastContainer from './components/ToastContainer';
+import Preloader from './components/Preloader';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import { useAppStore } from './store/useStore';
@@ -12,13 +13,18 @@ export default function App() {
   const location = useLocation();
   const isAdmin = location.pathname === '/admin';
   const { fetchMenu, fetchSettings, fetchReviews } = useAppStore();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
-    console.log("Fetching global data...");
-    fetchMenu();
-    fetchSettings();
-    fetchReviews();
+    const init = async () => {
+      await Promise.all([fetchMenu(), fetchSettings(), fetchReviews()]);
+      // Artificially wait a bit more to ensure smooth transition
+      setTimeout(() => setIsInitialLoading(false), 1500);
+    };
+    init();
   }, [fetchMenu, fetchSettings, fetchReviews]);
+
+  if (isInitialLoading) return <Preloader />;
   return (
     <div className="app-container">
       {!isAdmin && <Navbar />}
