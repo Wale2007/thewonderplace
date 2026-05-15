@@ -212,9 +212,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { error } = await supabase.from('orders').insert([orderData]);
     
     if (!error) {
-      // Send Email to Admin
       const itemsList = cart.map(i => `- ${i.name} x${i.quantity} (N${(i.price * i.quantity).toLocaleString()})`).join('\n');
       
+      // Send Email to Admin (Await this so it finishes before redirect)
       const adminEmailParams = {
         to_name: 'Admin',
         from_name: customer.name,
@@ -225,22 +225,20 @@ export const useAppStore = create<AppState>((set, get) => ({
         admin_email: 'officialwonderplace@gmail.com'
       };
       
-      const sendEmail = async (templateId: string, params: any) => {
-        try {
-          await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              service_id: import.meta.env.VITE_EMAILJS_SERVICE_ID,
-              template_id: templateId,
-              user_id: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
-              template_params: params
-            })
-          });
-        } catch (e) { console.error('Email failed', e); }
-      };
-
-      sendEmail(import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ADMIN, adminEmailParams);
+      try {
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service_id: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+            template_id: import.meta.env.VITE_EMAILJS_TEMPLATE_ID_ADMIN,
+            user_id: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+            template_params: adminEmailParams
+          })
+        });
+      } catch (e) { 
+        console.error('Admin Email failed', e); 
+      }
 
       const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
