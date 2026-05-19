@@ -6,6 +6,12 @@ import './MenuSection.css';
 export default function MenuSection() {
   const { menu, addToCart } = useAppStore();
 
+  const sortedMenu = [...menu].sort((a, b) => {
+    if (a.is_available && !b.is_available) return -1;
+    if (!a.is_available && b.is_available) return 1;
+    return 0;
+  });
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -40,7 +46,7 @@ export default function MenuSection() {
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
         >
-          {menu.map((item) => (
+          {sortedMenu.map((item) => (
             <motion.div 
               key={item.id} 
               className="menu-item-card glass-card"
