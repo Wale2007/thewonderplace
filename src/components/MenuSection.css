@@ -65,13 +65,17 @@
 }
 
 .availability-overlay span {
-  background: var(--color-error);
-  color: var(--color-white);
+  background: rgba(212, 168, 83, 0.2);
+  color: var(--color-gold);
+  border: 1px solid rgba(212, 168, 83, 0.5);
+  backdrop-filter: blur(4px);
   padding: 0.5rem 1.5rem;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.8rem;
   border-radius: var(--radius-sm);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.05em;
 }
 
 .menu-item-content {
