@@ -8,10 +8,9 @@ import './CartDrawer.css';
 export default function CartDrawer() {
   const [isOpen, setIsOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const { cart, removeFromCart, updateCartQuantity, settings } = useAppStore();
+  const { cart, removeFromCart, updateCartQuantity } = useAppStore();
   
   const totalPrice = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const finalPrice = totalPrice + (totalPrice > 0 ? settings.delivery_fee : 0);
 
   useEffect(() => {
     const toggleCart = () => setIsOpen(!isOpen);
@@ -82,10 +81,20 @@ export default function CartDrawer() {
               </div>
 
               {cart.length > 0 && (
-                <div className="cart-footer">
-                  <div className="summary-row total">
-                    <span>Total (inc. delivery)</span>
-                    <span>N{finalPrice.toLocaleString()}</span>
+                <div className="cart-footer" style={{ padding: '1.5rem 2rem 2rem' }}>
+                  <div className="cart-summary" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-white-muted)', fontSize: '0.95rem' }}>
+                      <span>Subtotal</span>
+                      <span style={{ fontWeight: '500', color: 'var(--color-white)' }}>N{totalPrice.toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-white-muted)', fontSize: '0.95rem' }}>
+                      <span>Delivery Fee</span>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--color-gold)', fontWeight: '500' }}>Choose at checkout</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-white)', fontWeight: 'bold', fontSize: '1.25rem', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '0.75rem', marginTop: '0.25rem' }}>
+                      <span>Estimated Total</span>
+                      <span style={{ color: 'var(--color-gold)' }}>N{totalPrice.toLocaleString()}</span>
+                    </div>
                   </div>
                   <button 
                     className="btn btn-primary btn-block" 
@@ -93,9 +102,10 @@ export default function CartDrawer() {
                       setIsCheckoutOpen(true);
                       setIsOpen(false);
                     }}
+                    style={{ height: '54px', fontSize: '1rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                   >
                     <span>Proceed to Checkout</span>
-                    <Send size={18} />
+                    <Send size={16} />
                   </button>
                 </div>
               )}
