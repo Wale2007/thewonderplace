@@ -60,7 +60,7 @@ export default function MenuSection() {
                 </div>
                 {!item.is_available && (
                   <div className="availability-overlay">
-                    <span>Sold Out</span>
+                    <span>Unavailable</span>
                   </div>
                 )}
               </div>

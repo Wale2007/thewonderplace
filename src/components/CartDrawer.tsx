@@ -83,22 +83,12 @@ export default function CartDrawer() {
 
               {cart.length > 0 && (
                 <div className="cart-footer">
-                  <div className="cart-summary">
-                    <div className="summary-row">
-                      <span>Subtotal</span>
-                      <span>N{totalPrice.toLocaleString()}</span>
-                    </div>
-                    <div className="summary-row">
-                      <span>Delivery Fee</span>
-                      <span>N{settings.delivery_fee.toLocaleString()}</span>
-                    </div>
-                    <div className="summary-row total">
-                      <span>Total</span>
-                      <span>N{finalPrice.toLocaleString()}</span>
-                    </div>
+                  <div className="summary-row total">
+                    <span>Total (inc. delivery)</span>
+                    <span>N{finalPrice.toLocaleString()}</span>
                   </div>
                   <button 
-                    className="btn btn-primary btn-block checkout-btn" 
+                    className="btn btn-primary btn-block" 
                     onClick={() => {
                       setIsCheckoutOpen(true);
                       setIsOpen(false);
