@@ -11,9 +11,10 @@ import {
   Settings,
   CheckCircle,
   X,
-  Upload
+  Upload,
+  Edit
 } from 'lucide-react';
-import { useAppStore } from '../store/useStore';
+import { useAppStore, type MenuItem } from '../store/useStore';
 import { supabase } from '../lib/supabase';
 import './Admin.css';
 
@@ -22,6 +23,7 @@ export default function Admin() {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'orders' | 'menu' | 'settings'>('orders');
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [uploading, setUploading] = useState(false);
   
   const [newItem, setNewItem] = useState({
@@ -74,13 +76,31 @@ export default function Admin() {
       if (uploadError) throw uploadError;
 
       const { data } = supabase.storage.from('images').getPublicUrl(filePath);
-      setNewItem({ ...newItem, image_url: data.publicUrl });
+      if (editingItem) {
+        setEditingItem({ ...editingItem, image_url: data.publicUrl });
+      } else {
+        setNewItem({ ...newItem, image_url: data.publicUrl });
+      }
       addToast('Image uploaded successfully', 'success');
     } catch (error) {
       addToast('Upload failed. Ensure "images" bucket exists.', 'error');
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleEditItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem || !editingItem.name || !editingItem.price) return;
+    await updateMenuItem(editingItem.id, {
+      name: editingItem.name,
+      description: editingItem.description,
+      price: editingItem.price,
+      image_url: editingItem.image_url,
+      is_available: editingItem.is_available
+    });
+    setEditingItem(null);
+    addToast('Dish updated successfully', 'success');
   };
 
   const handleAddItem = async (e: React.FormEvent) => {
@@ -194,30 +214,41 @@ export default function Admin() {
 
             {activeTab === 'menu' && (
               <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                {isAddingItem ? (
+                {isAddingItem || editingItem ? (
                   <div className="admin-form-container glass-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                      <h2 style={{ fontSize: '1.5rem', color: 'var(--color-gold)' }}>Add New Dish</h2>
-                      <button onClick={() => setIsAddingItem(false)} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={24} /></button>
+                      <h2 style={{ fontSize: '1.5rem', color: 'var(--color-gold)' }}>
+                        {editingItem ? 'Edit Dish' : 'Add New Dish'}
+                      </h2>
+                      <button onClick={() => { setIsAddingItem(false); setEditingItem(null); }} style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}><X size={24} /></button>
                     </div>
-                    <form onSubmit={handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <form onSubmit={editingItem ? handleEditItem : handleAddItem} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                       <div className="form-group">
                         <label style={{ color: 'var(--color-gold)', display: 'block', marginBottom: '8px' }}>Dish Name</label>
-                        <input type="text" className="form-input" required value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} style={{ width: '100%' }} />
+                        <input type="text" className="form-input" required value={editingItem ? editingItem.name : newItem.name} onChange={e => editingItem ? setEditingItem({...editingItem, name: e.target.value}) : setNewItem({...newItem, name: e.target.value})} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group">
                         <label style={{ color: 'var(--color-gold)', display: 'block', marginBottom: '8px' }}>Price (Naira)</label>
-                        <input type="number" className="form-input" required value={newItem.price} onChange={e => setNewItem({...newItem, price: Number(e.target.value)})} style={{ width: '100%' }} />
+                        <input type="number" className="form-input" required value={editingItem ? editingItem.price : newItem.price} onChange={e => editingItem ? setEditingItem({...editingItem, price: Number(e.target.value)}) : setNewItem({...newItem, price: Number(e.target.value)})} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group">
                         <label style={{ color: 'var(--color-gold)', display: 'block', marginBottom: '8px' }}>Description</label>
-                        <textarea className="form-input" rows={2} value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} style={{ width: '100%' }} />
+                        <textarea className="form-input" rows={2} value={editingItem ? (editingItem.description || '') : newItem.description} onChange={e => editingItem ? setEditingItem({...editingItem, description: e.target.value}) : setNewItem({...newItem, description: e.target.value})} style={{ width: '100%' }} />
                       </div>
                       <div className="form-group">
                         <label style={{ color: 'var(--color-gold)', display: 'block', marginBottom: '8px' }}>Image</label>
                         <div style={{ border: '2px dashed rgba(255,255,255,0.1)', borderRadius: '12px', padding: '1rem', textAlign: 'center' }}>
-                          {newItem.image_url ? (
-                            <img src={newItem.image_url} alt="Preview" style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }} />
+                          {(editingItem ? editingItem.image_url : newItem.image_url) ? (
+                            <div style={{ position: 'relative' }}>
+                              <img src={editingItem ? editingItem.image_url : newItem.image_url} alt="Preview" style={{ width: '100%', height: '150px', objectFit: 'cover', borderRadius: '8px' }} />
+                              <button 
+                                type="button" 
+                                onClick={() => editingItem ? setEditingItem({...editingItem, image_url: ''}) : setNewItem({...newItem, image_url: ''})}
+                                style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.6)', border: 'none', color: 'white', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
                           ) : (
                             <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                               <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
@@ -228,7 +259,7 @@ export default function Admin() {
                         </div>
                       </div>
                       <button type="submit" className="btn btn-primary btn-block" disabled={uploading} style={{ marginTop: '1rem' }}>
-                        <CheckCircle size={18} /><span>Save to Menu</span>
+                        <CheckCircle size={18} /><span>{editingItem ? 'Save Changes' : 'Save to Menu'}</span>
                       </button>
                     </form>
                   </div>
@@ -252,6 +283,14 @@ export default function Admin() {
                             title={item.is_available ? "Mark as Unavailable" : "Mark as Available"}
                           >
                             <CheckCircle size={18} />
+                          </button>
+                          <button 
+                            className="btn btn-ghost btn-sm" 
+                            onClick={() => setEditingItem(item)} 
+                            style={{ color: 'var(--color-gold)' }}
+                            title="Edit Dish"
+                          >
+                            <Edit size={18} />
                           </button>
                           <button className="btn btn-ghost btn-sm" onClick={() => deleteMenuItem(item.id)} style={{ color: 'var(--color-error)' }}><Trash2 size={18} /></button>
                         </div>
