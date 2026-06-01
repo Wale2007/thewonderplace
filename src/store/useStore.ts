@@ -25,6 +25,9 @@ export interface Order {
   items: CartItem[];
   total_price: number;
   status: 'pending' | 'confirmed' | 'delivered';
+  payment_status: 'unpaid' | 'paid' | 'failed';
+  payment_reference?: string;
+  payment_method?: 'flutterwave' | 'whatsapp';
 }
 
 export interface StoreSettings {
@@ -42,6 +45,17 @@ export interface Review {
   date: string;
 }
 
+export interface Payment {
+  id: string;
+  transaction_reference: string;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'failed';
+  customer_email: string;
+  customer_phone: string;
+  created_at: string;
+}
+
 // --- STORE STATE ---
 interface AppState {
   menu: MenuItem[];
@@ -49,6 +63,7 @@ interface AppState {
   reviews: Review[];
   cart: CartItem[];
   orders: Order[];
+  payments: Payment[];
   toasts: { id: string; message: string; type: 'success' | 'error' }[];
   isLoading: boolean;
 
@@ -76,7 +91,12 @@ interface AppState {
   clearCart: () => void;
   
   // Order Flow
-  createOrder: (customer: { name: string; phone: string; email: string; address: string }, orderType: 'delivery' | 'pickup') => Promise<void>;
+  createOrder: (customer: { name: string; phone: string; email: string; address: string }, orderType: 'delivery' | 'pickup', paymentMethod: 'flutterwave' | 'whatsapp') => Promise<void>;
+  
+  // Payment Actions
+  createPayment: (payment: Omit<Payment, 'id' | 'created_at'>) => Promise<void>;
+  updatePaymentStatus: (transactionReference: string, status: 'pending' | 'completed' | 'failed') => Promise<void>;
+  recordOrderPayment: (orderId: string, paymentReference: string, paymentStatus: 'paid' | 'failed') => Promise<void>;
 
   addToast: (message: string, type: 'success' | 'error') => void;
   removeToast: (id: string) => void;
@@ -93,6 +113,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   reviews: [],
   cart: [],
   orders: [],
+  payments: [],
   toasts: [],
   isLoading: false,
 
@@ -193,9 +214,46 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!error) set({ orders: [] });
   },
 
-  createOrder: async (customer, orderType: 'delivery' | 'pickup') => {
+  createPayment: async (payment) => {
+    const { error } = await supabase.from('payments').insert([payment]);
+    if (!error) {
+      get().addToast('Payment recorded', 'success');
+    } else {
+      get().addToast('Error recording payment', 'error');
+    }
+  },
+
+  updatePaymentStatus: async (transactionReference, status) => {
+    const { error } = await supabase
+      .from('payments')
+      .update({ status })
+      .eq('transaction_reference', transactionReference);
+    if (!error) {
+      get().addToast(`Payment status updated to ${status}`, 'success');
+    }
+  },
+
+  recordOrderPayment: async (orderId, paymentReference, paymentStatus) => {
+    const { error } = await supabase
+      .from('orders')
+      .update({ 
+        payment_status: paymentStatus === 'paid' ? 'paid' : 'failed',
+        payment_reference: paymentReference,
+        status: paymentStatus === 'paid' ? 'pending' : 'pending'
+      })
+      .eq('id', orderId);
+    
+    if (!error) {
+      get().fetchOrders();
+      get().addToast(`Order payment marked as ${paymentStatus}`, 'success');
+    } else {
+      get().addToast('Error updating order payment status', 'error');
+    }
+  },
+
+  createOrder: async (customer, orderType: 'delivery' | 'pickup', paymentMethod: 'flutterwave' | 'whatsapp') => {
     const { cart, settings, clearCart, addToast } = get();
-    const deliveryFee = orderType === 'delivery' ? 1500 : 0;
+    const deliveryFee = orderType === 'delivery' ? settings.delivery_fee : 0;
     const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const totalPrice = subtotal + deliveryFee;
     
@@ -206,7 +264,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       delivery_address: orderType === 'delivery' ? customer.address : 'PICKUP AT STORE',
       items: cart,
       total_price: totalPrice,
-      status: 'pending'
+      status: 'pending',
+      payment_status: 'unpaid',
+      payment_method: paymentMethod
     };
 
     const { error } = await supabase.from('orders').insert([orderData]);
@@ -254,9 +314,12 @@ export const useAppStore = create<AppState>((set, get) => ({
         `*Grand Total:* N${totalPrice.toLocaleString()}\n\n` +
         `*Payment Status:* I have just made the payment. Please confirm and process my order.`;
 
-      window.location.href = `https://wa.me/${settings.whatsapp_number}?text=${encodeURIComponent(orderText)}`;
+      if (paymentMethod === 'whatsapp') {
+        window.location.href = `https://wa.me/${settings.whatsapp_number}?text=${encodeURIComponent(orderText)}`;
+      }
+      
       clearCart();
-      addToast('Order details sent!', 'success');
+      addToast('Order created successfully!', 'success');
     } else {
       addToast('Error saving order.', 'error');
     }
