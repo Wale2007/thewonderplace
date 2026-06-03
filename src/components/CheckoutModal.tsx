@@ -28,6 +28,10 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const deliveryFee = orderType === 'delivery' ? settings.delivery_fee : 0;
   const totalPrice = subtotal + deliveryFee;
 
+  // Flutterwave is only shown when a LIVE key is configured (not the test key)
+  const flutterwaveKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || '';
+  const isFlutterwaveLive = flutterwaveKey.startsWith('FLWPUBK-') && !flutterwaveKey.startsWith('FLWPUBK_TEST');
+
   const handleShowPaymentMethod = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone || !formData.email) {
@@ -38,7 +42,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       addToast('Please enter delivery address', 'error');
       return;
     }
-    setStep('payment-method');
+    // If Flutterwave is not live, skip the payment-method screen and go straight to WhatsApp
+    if (!isFlutterwaveLive) {
+      handleWhatsAppPayment();
+    } else {
+      setStep('payment-method');
+    }
   };
 
   const handlePaymentMethodSelect = async (method: 'flutterwave' | 'whatsapp') => {
@@ -258,34 +267,37 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                       </p>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
-                        <button
-                          onClick={() => handlePaymentMethodSelect('flutterwave')}
-                          disabled={isSubmitting}
-                          style={{
-                            background: 'rgba(255, 215, 0, 0.1)',
-                            border: '2px solid rgba(255, 215, 0, 0.3)',
-                            borderRadius: '12px',
-                            padding: '1.5rem',
-                            color: 'var(--color-gold)',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            transition: 'all 0.3s ease',
-                            fontSize: '1rem',
-                            fontWeight: '600'
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 215, 0, 0.15)')}
-                          onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 215, 0, 0.1)')}
-                        >
-                          <CreditCard size={24} />
-                          <div style={{ textAlign: 'left' }}>
-                            <div>💳 Pay with Flutterwave</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--color-white-subtle)', marginTop: '4px' }}>
-                              Card, Mobile Money, USSD
+                        {/* Flutterwave — only shown when live key is active */}
+                        {isFlutterwaveLive && (
+                          <button
+                            onClick={() => handlePaymentMethodSelect('flutterwave')}
+                            disabled={isSubmitting}
+                            style={{
+                              background: 'rgba(255, 215, 0, 0.1)',
+                              border: '2px solid rgba(255, 215, 0, 0.3)',
+                              borderRadius: '12px',
+                              padding: '1.5rem',
+                              color: 'var(--color-gold)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '1rem',
+                              transition: 'all 0.3s ease',
+                              fontSize: '1rem',
+                              fontWeight: '600'
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 215, 0, 0.15)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 215, 0, 0.1)')}
+                          >
+                            <CreditCard size={24} />
+                            <div style={{ textAlign: 'left' }}>
+                              <div>💳 Pay with Flutterwave</div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--color-white-subtle)', marginTop: '4px' }}>
+                                Card, Mobile Money, USSD
+                              </div>
                             </div>
-                          </div>
-                        </button>
+                          </button>
+                        )}
 
                         <button
                           onClick={() => handlePaymentMethodSelect('whatsapp')}
