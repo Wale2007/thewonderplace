@@ -35,7 +35,7 @@ export default function AddDishModal({ isOpen, onClose }: AddDishModalProps) {
       const { data } = supabase.storage.from('images').getPublicUrl(filePath);
       setNewItem({ ...newItem, image_url: data.publicUrl });
       addToast('Image uploaded successfully', 'success');
-    } catch (error) {
+    } catch {
       addToast('Upload failed. Ensure "images" bucket is public.', 'error');
     } finally {
       setUploading(false);

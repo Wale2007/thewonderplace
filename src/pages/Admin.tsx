@@ -19,7 +19,7 @@ import { supabase } from '../lib/supabase';
 import './Admin.css';
 
 export default function Admin() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('wp_admin_auth') === 'true');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'orders' | 'menu' | 'settings'>('orders');
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -40,9 +40,6 @@ export default function Admin() {
   } = useAppStore();
 
   useEffect(() => {
-    const auth = localStorage.getItem('wp_admin_auth');
-    if (auth === 'true') setIsAuthenticated(true);
-    
     fetchOrders();
     fetchMenu();
     fetchSettings();
@@ -82,7 +79,7 @@ export default function Admin() {
         setNewItem({ ...newItem, image_url: data.publicUrl });
       }
       addToast('Image uploaded successfully', 'success');
-    } catch (error) {
+    } catch {
       addToast('Upload failed. Ensure "images" bucket exists.', 'error');
     } finally {
       setUploading(false);

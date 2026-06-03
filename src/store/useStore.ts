@@ -91,7 +91,13 @@ interface AppState {
   clearCart: () => void;
   
   // Order Flow
-  createOrder: (customer: { name: string; phone: string; email: string; address: string }, orderType: 'delivery' | 'pickup', paymentMethod: 'flutterwave' | 'whatsapp') => Promise<void>;
+  createOrder: (
+    customer: { name: string; phone: string; email: string; address: string },
+    orderType: 'delivery' | 'pickup',
+    paymentMethod: 'flutterwave' | 'whatsapp',
+    paymentReference?: string,
+    paymentStatus?: 'unpaid' | 'paid' | 'failed'
+  ) => Promise<void>;
   
   // Payment Actions
   createPayment: (payment: Omit<Payment, 'id' | 'created_at'>) => Promise<void>;
@@ -251,7 +257,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  createOrder: async (customer, orderType: 'delivery' | 'pickup', paymentMethod: 'flutterwave' | 'whatsapp') => {
+  createOrder: async (
+    customer,
+    orderType: 'delivery' | 'pickup',
+    paymentMethod: 'flutterwave' | 'whatsapp',
+    paymentReference?: string,
+    paymentStatus?: 'unpaid' | 'paid' | 'failed'
+  ) => {
     const { cart, settings, clearCart, addToast } = get();
     const deliveryFee = orderType === 'delivery' ? settings.delivery_fee : 0;
     const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
@@ -265,8 +277,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       items: cart,
       total_price: totalPrice,
       status: 'pending',
-      payment_status: 'unpaid',
-      payment_method: paymentMethod
+      payment_status: paymentStatus || 'unpaid',
+      payment_method: paymentMethod,
+      payment_reference: paymentReference
     };
 
     const { error } = await supabase.from('orders').insert([orderData]);

@@ -89,3 +89,32 @@ CREATE POLICY "Public Update Images" ON storage.objects FOR UPDATE TO public USI
 
 DROP POLICY IF EXISTS "Public Delete Images" ON storage.objects;
 CREATE POLICY "Public Delete Images" ON storage.objects FOR DELETE TO public USING (bucket_id = 'images');
+
+-- 10. Update ORDERS table for Payment Integration
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_email TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT DEFAULT 'unpaid';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_reference TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'whatsapp';
+
+-- 11. Create PAYMENTS table
+CREATE TABLE IF NOT EXISTS payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  transaction_reference TEXT UNIQUE NOT NULL,
+  amount NUMERIC NOT NULL,
+  currency TEXT DEFAULT 'NGN',
+  status TEXT DEFAULT 'pending', -- 'pending', 'completed', 'failed'
+  customer_email TEXT NOT NULL,
+  customer_phone TEXT
+);
+
+-- Enable RLS for PAYMENTS
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+
+-- Policies for PAYMENTS
+DROP POLICY IF EXISTS "Public Insert Payments" ON payments;
+CREATE POLICY "Public Insert Payments" ON payments FOR INSERT TO public WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Admin All Payments" ON payments;
+CREATE POLICY "Admin All Payments" ON payments FOR ALL TO public USING (true);
+

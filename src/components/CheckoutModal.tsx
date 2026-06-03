@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Phone, User, Send, Package, Truck, CreditCard } from 'lucide-react';
 import { useAppStore } from '../store/useStore';
 import PaymentModal from './PaymentModal';
+import { generateTransactionReference } from '../lib/flutterwave';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -13,8 +14,8 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { createOrder, cart, settings, addToast } = useAppStore();
   const [step, setStep] = useState<'details' | 'payment-method'>('details');
   const [orderType, setOrderType] = useState<'delivery' | 'pickup'>('delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'flutterwave' | 'whatsapp'>('flutterwave');
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [transactionRef, setTransactionRef] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -41,9 +42,9 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   };
 
   const handlePaymentMethodSelect = async (method: 'flutterwave' | 'whatsapp') => {
-    setPaymentMethod(method);
-    
     if (method === 'flutterwave') {
+      // Generate unique transaction reference
+      setTransactionRef(generateTransactionReference());
       // Open Flutterwave payment modal
       setIsPaymentModalOpen(true);
     } else {
@@ -69,7 +70,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const handleFlutterWavePaymentSuccess = async (transactionRef: string) => {
     setIsSubmitting(true);
     try {
-      await createOrder(formData, orderType, 'flutterwave');
+      await createOrder(formData, orderType, 'flutterwave', transactionRef, 'paid');
       setIsPaymentModalOpen(false);
       setStep('details');
       onClose();
@@ -342,6 +343,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           email: formData.email,
           phone: formData.phone
         }}
+        transactionRef={transactionRef}
         onPaymentSuccess={handleFlutterWavePaymentSuccess}
         onPaymentFailed={handleFlutterWavePaymentFailed}
       />

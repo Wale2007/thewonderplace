@@ -78,7 +78,7 @@ export default function Hero() {
                 transition={{ duration: 1.5, ease: 'easeInOut' }}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                 loading="eager"
-                // @ts-ignore
+                // @ts-expect-error: fetchpriority is non-standard but optimized
                 fetchpriority="high"
               />
             </AnimatePresence>
