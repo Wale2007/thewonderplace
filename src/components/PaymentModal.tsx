@@ -29,8 +29,10 @@ export default function PaymentModal({
   const { createPayment, addToast } = useAppStore();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || 'FLWPUBK_TEST-d024d9409d82dc750045a43347fe46c2-X';
+
   const config = {
-    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || 'FLWPUBK_TEST-d024d9409d82dc750045a43347fe46c2-X',
+    public_key: publicKey,
     tx_ref: transactionRef,
     amount: amount,
     currency: 'NGN',
@@ -51,45 +53,55 @@ export default function PaymentModal({
 
   if (!isOpen) return null;
 
-  const handlePaymentInit = async () => {
+  const handlePaymentInit = () => {
     setIsProcessing(true);
+    console.log('Initializing Flutterwave Payment:', {
+      publicKey: publicKey.substring(0, 15) + '...',
+      tx_ref: transactionRef,
+      amount,
+      customer: customerInfo.email
+    });
     
     try {
-      // First, record the pending payment record in Supabase
-      await createPayment({
-        transaction_reference: transactionRef,
-        amount: amount,
-        currency: 'NGN',
-        status: 'pending',
-        customer_email: customerInfo.email,
-        customer_phone: customerInfo.phone
-      });
-
       handleFlutterwavePayment({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         callback: async (response: any) => {
           closePaymentModal();
           setIsProcessing(false);
+          console.log('Flutterwave Response:', response);
           
-          if (response.status === 'successful' || response.status === 'completed') {
-            // Update payment record to completed
+          const isSuccess = response.status === 'successful' || response.status === 'completed';
+          
+          // Record payment in Supabase (don't block the client UI transition on this)
+          createPayment({
+            transaction_reference: transactionRef,
+            amount: amount,
+            currency: 'NGN',
+            status: isSuccess ? 'completed' : 'failed',
+            customer_email: customerInfo.email,
+            customer_phone: customerInfo.phone
+          }).catch(err => {
+            console.error('Error saving payment record:', err);
+          });
+
+          if (isSuccess) {
             await useAppStore.getState().updatePaymentStatus(transactionRef, 'completed');
             onPaymentSuccess(transactionRef);
           } else {
-            // Update payment record to failed
             await useAppStore.getState().updatePaymentStatus(transactionRef, 'failed');
             onPaymentFailed();
           }
         },
         onClose: () => {
           setIsProcessing(false);
+          console.log('Payment modal closed by user');
           addToast('Payment cancelled', 'error');
         },
       });
     } catch (err) {
-      console.error('Error initializing payment:', err);
+      console.error('Error triggering payment modal:', err);
       setIsProcessing(false);
-      addToast('Error initializing payment. Please try again.', 'error');
+      addToast('Failed to open payment gateway. Check console.', 'error');
     }
   };
 
