@@ -12,7 +12,9 @@ import {
   CheckCircle,
   X,
   Upload,
-  Edit
+  Edit,
+  CreditCard,
+  MessageCircle
 } from 'lucide-react';
 import { useAppStore, type MenuItem } from '../store/useStore';
 import { supabase } from '../lib/supabase';
@@ -188,11 +190,42 @@ export default function Admin() {
                   <div key={order.id} className="order-card glass-card">
                     <div className="order-header">
                       <h3>{order.customer_name}</h3>
-                      <span className={`order-status-badge status-${order.status}`}>{order.status}</span>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        {/* Payment method badge */}
+                        <span style={{
+                          fontSize: '0.7rem', padding: '2px 8px', borderRadius: '4px', fontWeight: '600',
+                          background: order.payment_method === 'flutterwave' ? 'rgba(255, 215, 0, 0.15)' : 'rgba(37, 211, 102, 0.15)',
+                          color: order.payment_method === 'flutterwave' ? 'var(--color-gold)' : '#4ade80',
+                          border: `1px solid ${order.payment_method === 'flutterwave' ? 'rgba(255,215,0,0.3)' : 'rgba(74,222,128,0.3)'}`,
+                          display: 'flex', alignItems: 'center', gap: '4px'
+                        }}>
+                          {order.payment_method === 'flutterwave'
+                            ? <><CreditCard size={10} /> Flutterwave</>
+                            : <><MessageCircle size={10} /> WhatsApp</>}
+                        </span>
+                        {/* Order status badge */}
+                        <span className={`order-status-badge status-${order.status}`}>{order.status}</span>
+                      </div>
                     </div>
                     <div className="order-details">
                       <p className="order-detail-item"><Phone size={14} /> {order.phone_number}</p>
                       <p className="order-detail-item"><MapPin size={14} /> {order.delivery_address}</p>
+                      {/* Payment status row */}
+                      <p className="order-detail-item" style={{ marginTop: '4px' }}>
+                        <span style={{
+                          fontSize: '0.72rem', padding: '2px 8px', borderRadius: '4px',
+                          background: order.payment_status === 'paid' ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
+                          color: order.payment_status === 'paid' ? '#4ade80' : '#f87171',
+                          border: `1px solid ${order.payment_status === 'paid' ? 'rgba(74,222,128,0.3)' : 'rgba(239,68,68,0.3)'}`
+                        }}>
+                          {order.payment_status === 'paid' ? '✅ Payment Confirmed' : '⏳ Payment Pending'}
+                        </span>
+                        {order.payment_reference && (
+                          <span style={{ fontSize: '0.65rem', color: 'var(--color-white-subtle)', marginLeft: '6px' }}>
+                            Ref: {order.payment_reference.slice(-12)}
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <div className="order-items">
                       {order.items.map((item, idx) => <div key={idx} className="order-item"><span>{item.name}</span><span>x{item.quantity}</span></div>)}
@@ -200,8 +233,13 @@ export default function Admin() {
                     <div className="order-footer">
                       <p className="order-total"><span>Total</span><span className="total-amount">N{order.total_price.toLocaleString()}</span></p>
                       <div className="order-actions">
-                        {order.status === 'pending' && <button className="btn btn-primary btn-sm" onClick={() => updateOrderStatus(order.id, 'confirmed')}>Confirm</button>}
-                        {order.status === 'confirmed' && <button className="btn btn-ghost btn-sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>Delivered</button>}
+                        {/* Only show Confirm button for non-Flutterwave pending orders */}
+                        {order.status === 'pending' && order.payment_method !== 'flutterwave' && (
+                          <button className="btn btn-primary btn-sm" onClick={() => updateOrderStatus(order.id, 'confirmed')}>Confirm</button>
+                        )}
+                        {order.status === 'confirmed' && (
+                          <button className="btn btn-ghost btn-sm" onClick={() => updateOrderStatus(order.id, 'delivered')}>Delivered</button>
+                        )}
                       </div>
                     </div>
                   </div>

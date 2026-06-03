@@ -269,6 +269,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const totalPrice = subtotal + deliveryFee;
     
+    // Flutterwave orders are auto-confirmed since payment is verified
+    const orderStatus = (paymentMethod === 'flutterwave' && paymentStatus === 'paid') ? 'confirmed' : 'pending';
+
     const orderData = {
       customer_name: customer.name,
       customer_email: customer.email,
@@ -276,7 +279,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       delivery_address: orderType === 'delivery' ? customer.address : 'PICKUP AT STORE',
       items: cart,
       total_price: totalPrice,
-      status: 'pending',
+      status: orderStatus,
       payment_status: paymentStatus || 'unpaid',
       payment_method: paymentMethod,
       payment_reference: paymentReference
@@ -314,22 +317,48 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+      const itemLines = cart.map(i => `- ${i.name} x${i.quantity} (N${(i.price * i.quantity).toLocaleString()})`).join('%0A');
 
-      const orderText = `*PAYMENT CONFIRMATION - THEWONDERPLACE*\n\n` +
-        `*Customer:* ${customer.name}\n` +
-        `*Phone:* ${customer.phone}\n` +
-        `*Method:* ${orderType === 'delivery' ? 'Delivery' : 'Pickup'}\n` +
-        (orderType === 'delivery' ? `*Address:* ${customer.address}\n\n` : `\n`) +
-        `*Items Ordered (${totalItemsCount}):*\n` +
-        cart.map(i => `- ${i.name} x${i.quantity} (N${(i.price * i.quantity).toLocaleString()})`).join('\n') +
-        `\n\n*Subtotal:* N${subtotal.toLocaleString()}\n` +
-        `*Delivery Fee:* N${deliveryFee.toLocaleString()}\n` +
-        `*Grand Total:* N${totalPrice.toLocaleString()}\n\n` +
-        `*Payment Status:* I have just made the payment. Please confirm and process my order.`;
+      // Build WhatsApp message based on payment method
+      let waMessage: string;
 
-      if (paymentMethod === 'whatsapp') {
-        window.location.href = `https://wa.me/${settings.whatsapp_number}?text=${encodeURIComponent(orderText)}`;
+      if (paymentMethod === 'flutterwave') {
+        // Payment already confirmed — auto-notify admin with full details
+        waMessage =
+          `*✅ NEW ORDER — PAYMENT CONFIRMED*%0A%0A` +
+          `*Payment Method:* Flutterwave (Online)%0A` +
+          `*Payment Reference:* ${paymentReference || 'N/A'}%0A` +
+          `*Payment Status:* ✅ CONFIRMED & VERIFIED%0A%0A` +
+          `*Customer:* ${customer.name}%0A` +
+          `*Phone:* ${customer.phone}%0A` +
+          `*Email:* ${customer.email}%0A` +
+          `*Order Type:* ${orderType === 'delivery' ? '🚚 Delivery' : '🛍️ Pickup'}%0A` +
+          (orderType === 'delivery' ? `*Address:* ${customer.address}%0A%0A` : `%0A`) +
+          `*Items Ordered (${totalItemsCount}):*%0A` +
+          itemLines +
+          `%0A%0A*Subtotal:* N${subtotal.toLocaleString()}%0A` +
+          `*Delivery Fee:* N${deliveryFee.toLocaleString()}%0A` +
+          `*Grand Total:* N${totalPrice.toLocaleString()}%0A%0A` +
+          `_Please prepare and dispatch this order. Payment has been received automatically._`;
+      } else {
+        // WhatsApp payment — customer sends message asking for confirmation
+        waMessage =
+          `*NEW ORDER - THEWONDERPLACE*%0A%0A` +
+          `*Payment Method:* WhatsApp Transfer%0A` +
+          `*Customer:* ${customer.name}%0A` +
+          `*Phone:* ${customer.phone}%0A` +
+          `*Order Type:* ${orderType === 'delivery' ? '🚚 Delivery' : '🛍️ Pickup'}%0A` +
+          (orderType === 'delivery' ? `*Address:* ${customer.address}%0A%0A` : `%0A`) +
+          `*Items Ordered (${totalItemsCount}):*%0A` +
+          itemLines +
+          `%0A%0A*Subtotal:* N${subtotal.toLocaleString()}%0A` +
+          `*Delivery Fee:* N${deliveryFee.toLocaleString()}%0A` +
+          `*Grand Total:* N${totalPrice.toLocaleString()}%0A%0A` +
+          `_I have just made the transfer. Kindly confirm and process my order._`;
       }
+
+      // Always redirect to WhatsApp — for Flutterwave it's a notification, for WhatsApp it's payment confirmation
+      window.location.href = `https://wa.me/${settings.whatsapp_number}?text=${waMessage}`;
       
       clearCart();
       addToast('Order created successfully!', 'success');
